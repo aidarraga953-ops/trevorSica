@@ -23,6 +23,7 @@ import javafx.stage.Window;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.trevor.sica.components.TrevorUi.*;
 
@@ -47,6 +48,7 @@ public final class ShellController {
     final DemoData data = new DemoData();
     final Map<Profile, Map<String, Boolean>> permissions = new EnumMap<>(Profile.class);
     private boolean notificationsEnabled = true;
+    private Consumer<Profile> onSignOut;
 
     @FXML private void initialize() {
         drawer = new TrevorDrawer(root);
@@ -71,6 +73,13 @@ public final class ShellController {
     void notify(String title, String message) { toast.show(title, message); }
     void drawer(String title, Node content) { drawer.open(title, content); }
     void newRequest(Runnable onCreated) { modules.newRequest(onCreated); }
+
+    public void setOnSignOut(Consumer<Profile> action) { onSignOut = action; }
+
+    public void enter(Profile selected) {
+        selectProfile(selected);
+        data.audit("Inicio de sesión", profile, "Sesión de demostración", "Sesiones");
+    }
 
     private void selectProfile(Profile selected) {
         if (selected == null) return;
@@ -133,11 +142,10 @@ public final class ShellController {
 
     private void signOut() {
         TrevorDialog.open(window(), "Cerrar sesión de demostración",
-                "Volverás al inicio del perfil actual.",
+                "Volverás a la pantalla de acceso de Trevor.",
                 new Region(), "Cerrar sesión", () -> {
                     data.audit("Cierre de sesión", profile, "Sesión de demostración", "Sesiones");
-                    navigate(Route.HOME);
-                    notify("Sesión finalizada", "El selector de perfiles sigue disponible.");
+                    if (onSignOut != null) javafx.application.Platform.runLater(() -> onSignOut.accept(profile));
                     return true;
                 });
     }
