@@ -8,12 +8,14 @@ import com.trevor.sica.demo.DemoData.Profile;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.effect.BoxBlur;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -50,7 +52,11 @@ public final class LoginController {
     @FXML private void initialize() {
         setBackdrop();
         var identity = row(11, new TrevorLogo(44), label("trevor.", "login-wordmark"), label("SICA", "login-sica"));
-        masthead.getChildren().setAll(identity, spacer(), label("ZONA ACME", "login-site"));
+        var site = new StackPane(label("ZONA ACME", "login-site-label"));
+        site.getStyleClass().add("login-site");
+        site.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        addFrost(site, 34, 13, 0, "login-site-sheen");
+        masthead.getChildren().setAll(identity, spacer(), site);
         var lead = label("Cada acceso,", "login-headline");
         var emphasis = label("en buenas manos.", "login-headline-accent");
         lead.setWrapText(true);
@@ -144,33 +150,7 @@ public final class LoginController {
         forest.setImage(background);
         forest.fitWidthProperty().bind(root.widthProperty());
         forest.fitHeightProperty().bind(root.heightProperty());
-
-        ImageView frosted = new ImageView(background);
-        frosted.viewportProperty().bind(forest.viewportProperty());
-        frosted.fitWidthProperty().bind(forest.fitWidthProperty());
-        frosted.fitHeightProperty().bind(forest.fitHeightProperty());
-        frosted.setEffect(new BoxBlur(20, 20, 2));
-        frosted.setManaged(false);
-        var tint = new Region();
-        tint.getStyleClass().add("login-glass-tint");
-        tint.prefWidthProperty().bind(glass.widthProperty());
-        tint.prefHeightProperty().bind(glass.heightProperty());
-        StackPane inset = new StackPane(frosted, tint);
-        inset.setManaged(false);
-        inset.setMouseTransparent(true);
-        Rectangle corners = new Rectangle();
-        corners.widthProperty().bind(glass.widthProperty());
-        corners.heightProperty().bind(glass.heightProperty());
-        corners.setArcWidth(58);
-        corners.setArcHeight(58);
-        inset.setClip(corners);
-        glass.getChildren().addFirst(inset);
-        glass.layoutBoundsProperty().addListener((obs, old, bounds) ->
-                inset.resize(bounds.getWidth(), bounds.getHeight()));
-        glass.localToSceneTransformProperty().addListener((obs, old, transform) -> {
-            frosted.setLayoutX(-transform.getTx());
-            frosted.setLayoutY(-transform.getTy());
-        });
+        addFrost(glass, 58, 35, -110, "login-glass-sheen");
         Runnable resize = () -> {
             double width = root.getWidth();
             double height = root.getHeight();
@@ -180,9 +160,57 @@ public final class LoginController {
             double cropHeight = height / scale;
             forest.setViewport(new Rectangle2D((background.getWidth() - cropWidth) / 2,
                     (background.getHeight() - cropHeight) / 2, cropWidth, cropHeight));
+            HBox.setMargin(glass, new Insets(0, 26 + Math.max(0, width - 1050) * .26, 0, 0));
             root.pseudoClassStateChanged(COMPACT, width < 1100 || height < 660);
         };
         root.widthProperty().addListener((obs, old, width) -> resize.run());
         root.heightProperty().addListener((obs, old, height) -> resize.run());
+    }
+
+    private void addFrost(StackPane surface, double cornerDiameter, double blur, double refraction, String sheenStyle) {
+        Image background = forest.getImage();
+        double bleed = blur * 1.7;
+        var image = new ImageView(background);
+        image.setManaged(false);
+        image.setLayoutX(-bleed);
+        image.setLayoutY(-bleed);
+        image.fitWidthProperty().bind(surface.widthProperty().add(2 * bleed));
+        image.fitHeightProperty().bind(surface.heightProperty().add(2 * bleed));
+
+        var color = new ColorAdjust(.015, .19, .105, .05);
+        var diffusion = new BoxBlur(blur, blur, 3);
+        diffusion.setInput(color);
+        image.setEffect(diffusion);
+
+        var sheen = new Region();
+        sheen.getStyleClass().add(sheenStyle);
+        var inset = new StackPane(image, sheen);
+        inset.setManaged(false);
+        inset.setMouseTransparent(true);
+        var clip = new Rectangle();
+        clip.widthProperty().bind(surface.widthProperty());
+        clip.heightProperty().bind(surface.heightProperty());
+        clip.setArcWidth(cornerDiameter);
+        clip.setArcHeight(cornerDiameter);
+        inset.setClip(clip);
+        surface.getChildren().addFirst(inset);
+
+        Runnable sample = () -> {
+            var viewport = forest.getViewport();
+            if (viewport == null || forest.getFitWidth() <= 0 || surface.getWidth() <= 0 || surface.getHeight() <= 0) return;
+            inset.resize(surface.getWidth(), surface.getHeight());
+            var origin = forest.sceneToLocal(surface.localToScene(0, 0));
+            double scale = viewport.getWidth() / forest.getFitWidth();
+            double sampleWidth = Math.min(background.getWidth(), image.getFitWidth() * scale);
+            double sampleHeight = Math.min(background.getHeight(), image.getFitHeight() * scale);
+            double x = Math.clamp(viewport.getMinX() + (origin.getX() - bleed + refraction) * scale,
+                    0, background.getWidth() - sampleWidth);
+            double y = Math.clamp(viewport.getMinY() + (origin.getY() - bleed) * scale,
+                    0, background.getHeight() - sampleHeight);
+            image.setViewport(new Rectangle2D(x, y, sampleWidth, sampleHeight));
+        };
+        surface.layoutBoundsProperty().addListener((obs, before, after) -> sample.run());
+        surface.localToSceneTransformProperty().addListener((obs, before, after) -> sample.run());
+        forest.viewportProperty().addListener((obs, before, after) -> sample.run());
     }
 }
