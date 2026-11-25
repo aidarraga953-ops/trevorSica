@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +21,7 @@ public final class DemoData {
     public enum Route {
         HOME("Inicio", "home", ""), RECORDS("Registros", "scan", "Consulta un documento y registra un movimiento."),
         REQUESTS("Solicitudes", "file", "Consulta y gestiona las solicitudes de acceso."),
+        PASSES("Pases temporales", "ticket", "Consulta las solicitudes de pase y sus comprobantes de acceso."),
         VISITS("Consulta de visitas", "search", "Revisa la información de una visita y sus incidentes."),
         RESTRICTIONS("Restricciones", "shield", "Consulta el estado de acceso de una persona."),
         INCIDENTS("Historial de incidentes", "warning", "Consulta las novedades registradas en Zona ACME."),
@@ -44,13 +46,13 @@ public final class DemoData {
 
     public enum Profile {
         GUARD("Guarda de seguridad", "Carlos Ruiz", "Operación de accesos", 0,
-                Route.HOME, Route.RECORDS, Route.REQUESTS),
+                Route.HOME, Route.RECORDS, Route.REQUESTS, Route.PASSES),
         SUPERVISOR("Supervisor de seguridad", "Andrés Pérez", "Monitoreo y seguridad", 1,
-                Route.HOME, Route.VISITS, Route.RESTRICTIONS, Route.INCIDENTS, Route.AUDIT),
+                Route.HOME, Route.VISITS, Route.RESTRICTIONS, Route.PASSES, Route.INCIDENTS, Route.AUDIT),
         ADMIN("Superusuario", "Administrador SICA", "Administración de Zona ACME", 2,
                 Route.HOME, Route.COMPANIES, Route.ACCOUNTS, Route.ROLES, Route.AUDIT),
         EMPLOYEE("Funcionario de empresa", "Valentina Mora", "Empresa Sol", 3,
-                Route.HOME, Route.CALENDAR, Route.APPROVALS, Route.HISTORY);
+                Route.HOME, Route.CALENDAR, Route.APPROVALS, Route.PASSES, Route.HISTORY);
 
         public final String title;
         public final String name;
@@ -67,6 +69,15 @@ public final class DemoData {
         }
 
         @Override public String toString() { return title; }
+
+        public String demoEmail() {
+            return switch (this) {
+                case GUARD -> "carlos.ruiz@example.com";
+                case SUPERVISOR -> "andres.perez@example.com";
+                case ADMIN -> "admin.sica@example.com";
+                case EMPLOYEE -> "valentina.mora@example.com";
+            };
+        }
     }
 
     public enum Status {
@@ -93,6 +104,35 @@ public final class DemoData {
     public record Account(String name, String email, Profile role, String company, Status status, int portrait) {}
     public record Company(String name, String officer, Status status, String mark) {
         public Company withStatus(Status value) { return new Company(name, officer, value, mark); }
+    }
+
+    public final ObservableList<TemporaryPass> passes = FXCollections.observableArrayList();
+    private int passSequence = 3;
+
+    public TemporaryPass requestPass(Person person, String reason, LocalDateTime start, LocalDateTime end, Profile issuer) {
+        var pass = new TemporaryPass("PT-%04d".formatted(passSequence++), person, reason, start, end,
+                issuer.name, null, null, Status.PENDING);
+        passes.addFirst(pass);
+        audit("Pase temporal solicitado", issuer, pass.code() + " · " + person.name, "Autorizaciones");
+        return pass;
+    }
+
+    public TemporaryPass decidePass(TemporaryPass pass, boolean approved, Profile reviewer) {
+        int index = passes.indexOf(pass);
+        if (index < 0 || pass.status() != Status.PENDING) return null;
+        var now = now();
+        if (approved && !now.isBefore(pass.end())) return null;
+        var updated = new TemporaryPass(pass.code(), pass.person(), pass.reason(), pass.start(), pass.end(),
+                pass.issuer(), reviewer.name, now, approved ? Status.APPROVED : Status.REJECTED);
+        passes.set(index, updated);
+        audit(approved ? "Pase temporal aprobado" : "Pase temporal rechazado", reviewer,
+                pass.code() + " · " + pass.person().name(), "Autorizaciones");
+        return updated;
+    }
+
+    public java.util.Optional<TemporaryPass> validPass(Person person) {
+        var now = now();
+        return passes.stream().filter(pass -> pass.person().document().equals(person.document) && pass.isValidAt(now)).findFirst();
     }
 
     public final Person laura = new Person("Laura Méndez", "102030", "Empresa Sol", -1, Status.AUTHORIZED);
@@ -141,10 +181,10 @@ public final class DemoData {
             new Incident(visits.getLast(), today.minusDays(2), LocalTime.of(9, 20), "Se derivó la consulta al supervisor de turno."));
 
     public final ObservableList<Account> accounts = FXCollections.observableArrayList(
-            new Account("Carlos Ruiz", "carlos.ruiz@example.com", Profile.GUARD, "Zona ACME", Status.ACTIVE, 0),
-            new Account("Andrés Pérez", "andres.perez@example.com", Profile.SUPERVISOR, "Zona ACME", Status.ACTIVE, 1),
-            new Account("Administrador SICA", "admin.sica@example.com", Profile.ADMIN, "Zona ACME", Status.ACTIVE, 2),
-            new Account("Valentina Mora", "valentina.mora@example.com", Profile.EMPLOYEE, "Empresa Sol", Status.ACTIVE, 3),
+            new Account("Carlos Ruiz", Profile.GUARD.demoEmail(), Profile.GUARD, "Zona ACME", Status.ACTIVE, 0),
+            new Account("Andrés Pérez", Profile.SUPERVISOR.demoEmail(), Profile.SUPERVISOR, "Zona ACME", Status.ACTIVE, 1),
+            new Account("Administrador SICA", Profile.ADMIN.demoEmail(), Profile.ADMIN, "Zona ACME", Status.ACTIVE, 2),
+            new Account("Valentina Mora", Profile.EMPLOYEE.demoEmail(), Profile.EMPLOYEE, "Empresa Sol", Status.ACTIVE, 3),
             new Account("Julián Rojas", "julian.rojas@example.com", Profile.EMPLOYEE, "Empresa Luna", Status.INACTIVE, -1));
 
     public final ObservableList<Company> companies = FXCollections.observableArrayList(
@@ -157,6 +197,17 @@ public final class DemoData {
     public static final int[] HOURLY_ENTRIES = {8, 19, 23, 15, 8, 7, 5};
     public static final int[] HOURLY_EXITS = {3, 7, 9, 8, 6, 5, 5};
 
+    public DemoData() {
+        var now = now().withSecond(0).withNano(0);
+        var samuel = new Person("Samuel Ríos", "583210", Profile.EMPLOYEE.brief, -1, Status.WAITING);
+        var lucia = new Person("Lucía Ospina", "692104", Profile.EMPLOYEE.brief, -1, Status.WAITING);
+        passes.addAll(
+                new TemporaryPass("PT-0002", lucia, "Entrega de materiales", now, now.plusHours(4),
+                        Profile.GUARD.name, null, null, Status.PENDING),
+                new TemporaryPass("PT-0001", samuel, "Revisión de equipos", now.minusHours(1),
+                        now.plusHours(2), Profile.GUARD.name, Profile.EMPLOYEE.name, now.minusMinutes(45), Status.APPROVED));
+    }
+
     public int movementCount(Status type) {
         int illustratedTotal = type == Status.EXIT ? 42 : 82;
         return illustratedTotal + (int) movements.stream()
@@ -165,12 +216,14 @@ public final class DemoData {
 
     public Person findPerson(String document) {
         return directory.stream().filter(person -> person.document.equals(document.strip())).findFirst()
-                .orElseGet(() -> visits.stream().map(Visit::person)
+                .orElseGet(() -> java.util.stream.Stream.concat(visits.stream().map(Visit::person),
+                                passes.stream().map(TemporaryPass::person))
                         .filter(person -> person.document.equals(document.strip())).findFirst().orElse(null));
     }
 
     public Status accessStatus(Person person) {
         if (person.access != Status.WAITING) return person.access;
+        if (validPass(person).isPresent()) return Status.AUTHORIZED;
         return visits.stream().anyMatch(visit -> visit.person.equals(person) && visit.date.equals(today)
                 && visit.status == Status.APPROVED) ? Status.AUTHORIZED : Status.WAITING;
     }
@@ -180,8 +233,10 @@ public final class DemoData {
     }
 
     public void audit(String action, Profile actor, String detail, String type) {
-        audits.addFirst(new Audit(action, actor.name, detail, today, currentTime(), type));
+        var now = now();
+        audits.addFirst(new Audit(action, actor.name, detail, now.toLocalDate(), now.toLocalTime(), type));
     }
 
-    public LocalTime currentTime() { return LocalTime.now(ZoneId.of("America/Bogota")).withSecond(0).withNano(0); }
+    public LocalTime currentTime() { return now().toLocalTime().withSecond(0).withNano(0); }
+    public LocalDateTime now() { return LocalDateTime.now(ZoneId.of("America/Bogota")); }
 }

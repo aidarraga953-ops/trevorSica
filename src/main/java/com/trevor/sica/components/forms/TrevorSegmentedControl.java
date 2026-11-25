@@ -13,10 +13,12 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.IntConsumer;
 
 public final class TrevorSegmentedControl extends StackPane {
     private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
+    private final List<ToggleButton> options = new ArrayList<>();
 
     public TrevorSegmentedControl(List<String> labels, IntConsumer onSelect) {
         setAlignment(Pos.CENTER_LEFT);
@@ -51,7 +53,10 @@ public final class TrevorSegmentedControl extends StackPane {
                 onSelect.accept(current);
             });
             buttons.getChildren().add(button);
+            options.add(button);
         }
         getChildren().addAll(thumb, buttons);
     }
+
+    public void select(int index) { options.get(index).fire(); }
 }

@@ -55,11 +55,16 @@ final class GuardModules {
             var identity = row(12, new Portrait(person.name(), person.portrait(), 54),
                     textBlock(person.name(), person.company() + " · Documento " + person.document()), spacer(),
                     new TrevorStatusBadge(access));
-            String accessTime = data.visits.stream()
+            String accessTime = data.validPass(person).map(pass -> "Pase " + pass.code() + " · válido hasta "
+                    + SupervisorModules.stamp(pass.end().toLocalDate(), pass.end().toLocalTime())).orElseGet(() -> data.visits.stream()
                     .filter(visit -> visit.person().equals(person) && visit.date().equals(data.today)
                             && visit.status() != Status.REJECTED)
-                    .findFirst().map(visit -> visit.time().format(DemoData.TIME)).orElse("Sin visita programada");
+                    .findFirst().map(visit -> visit.time().format(DemoData.TIME)).orElse("Sin visita programada"));
             var record = button("Confirmar " + mode.label.toLowerCase(DemoData.SPANISH), "check", "primary-button", () -> {
+                if (data.accessStatus(person) != Status.AUTHORIZED) {
+                    show(result, new TrevorEmptyState("La autorización ya no está vigente", "Vuelve a consultar el documento."));
+                    return;
+                }
                 Movement movement = new Movement(person, data.today, data.currentTime(), mode);
                 data.movements.addFirst(movement);
                 data.audit("Registro de " + mode.label.toLowerCase(DemoData.SPANISH), shell.profile(),

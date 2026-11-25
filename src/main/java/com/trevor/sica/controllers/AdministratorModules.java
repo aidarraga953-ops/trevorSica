@@ -155,7 +155,7 @@ final class AdministratorModules {
         screen.add("filterSlot", new TrevorCard("white", filterRow(fieldGroup("Perfil", selected), spacer(), all, enabled)));
         String[] categories = {"Accesos", "Supervisión", "Administración", "Empresa"};
         Route[][] routes = {
-                {Route.RECORDS, Route.REQUESTS}, {Route.VISITS, Route.RESTRICTIONS, Route.INCIDENTS, Route.AUDIT},
+                {Route.RECORDS, Route.REQUESTS, Route.PASSES}, {Route.VISITS, Route.RESTRICTIONS, Route.INCIDENTS, Route.AUDIT},
                 {Route.COMPANIES, Route.ACCOUNTS, Route.ROLES}, {Route.CALENDAR, Route.APPROVALS, Route.HISTORY}
         };
         Runnable refresh = new Runnable() {

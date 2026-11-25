@@ -18,7 +18,7 @@ public final class TrevorApp extends Application {
         Locale.setDefault(Locale.Category.FORMAT, DemoData.SPANISH);
         Parent root = FXMLLoader.load(getClass().getResource(RESOURCES + "fxml/layouts/shell.fxml"));
         Scene scene = new Scene(root, 1332, 820);
-        for (String theme : List.of("theme", "components", "navigation", "controls", "dashboard")) {
+        for (String theme : List.of("theme", "components", "navigation", "controls", "dashboard", "passes")) {
             scene.getStylesheets().add(getClass().getResource(RESOURCES + "css/trevor-" + theme + ".css").toExternalForm());
         }
         stage.setTitle("Trevor SICA · Zona ACME");

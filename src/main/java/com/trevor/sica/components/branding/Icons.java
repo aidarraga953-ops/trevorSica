@@ -39,6 +39,8 @@ public final class Icons {
             case "panel" -> "M4 5H20V19H4ZM9 5V19";
             case "chart" -> "M4 4V20H21M8 15V11M13 15V7M18 15V4";
             case "id" -> "M3 5H21V19H3ZM8 10A2 2 0 1 0 12 10A2 2 0 1 0 8 10M6 16Q10 12 14 16M16 9H19M16 13H19";
+            case "ticket" -> "M5 5H19Q21 5 21 7V9A3 3 0 0 0 21 15V17Q21 19 19 19H5Q3 19 3 17V15A3 3 0 0 0 3 9V7Q3 5 5 5ZM15 7V8M15 11V13M15 16V17";
+            case "eye" -> "M2 12Q6 5 12 5Q18 5 22 12Q18 19 12 19Q6 19 2 12ZM15 12A3 3 0 1 0 9 12A3 3 0 1 0 15 12";
             case "sun" -> "M17 12A5 5 0 1 0 7 12A5 5 0 1 0 17 12M12 2V4M12 20V22M2 12H4M20 12H22M5 5L7 7M17 17L19 19M5 19L7 17M17 7L19 5";
             case "moon" -> "M20 16A9 9 0 0 1 8 4A9 9 0 1 0 20 16Z";
             case "dots" -> "M5 12V12.1M12 12V12.1M19 12V12.1";

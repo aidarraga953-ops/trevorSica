@@ -28,18 +28,21 @@ final class ModuleController {
     private final SupervisorModules supervisor;
     private final AdministratorModules administrator;
     private final EmployeeModules employee;
+    private final PassModules passes;
 
     ModuleController(ShellController shell) {
         guard = new GuardModules(shell);
         supervisor = new SupervisorModules(shell);
         administrator = new AdministratorModules(shell);
         employee = new EmployeeModules(shell);
+        passes = new PassModules(shell);
     }
 
     Parent build(Route route) {
         return switch (route) {
             case RECORDS -> guard.records();
             case REQUESTS -> guard.requests();
+            case PASSES -> passes.build();
             case VISITS -> supervisor.visits();
             case RESTRICTIONS -> supervisor.restrictions();
             case INCIDENTS -> supervisor.incidents();

@@ -66,7 +66,8 @@ final class DashboardController {
         view.add("operationsSlot", summary(), arrivals());
         VBox.setVgrow(view.slot("operationsSlot").getChildren().getLast(), Priority.ALWAYS);
         view.add("movementsSlot", recentMovements());
-        view.add("profileSlot", new TrevorProfileCard("Guarda de turno", Profile.GUARD));
+        view.add("profileSlot", new TrevorProfileCard("Guarda de turno", Profile.GUARD),
+                new TrevorCard("soft", moduleLink("Pases temporales", "Abrir la ticketera de acceso", Route.PASSES)));
         return view;
     }
 

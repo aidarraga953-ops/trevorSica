@@ -25,4 +25,5 @@ public final class TrevorSearchField extends javafx.scene.layout.HBox {
 
     public void onSubmit(Runnable action) { field.setOnAction(event -> action.run()); }
     public String query() { return field.getText().strip(); }
+    public void clear() { field.clear(); }
 }
