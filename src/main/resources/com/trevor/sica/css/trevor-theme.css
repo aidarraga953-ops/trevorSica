@@ -1,0 +1,46 @@
+.root {
+    -trevor-lime: #C3E89F;
+    -trevor-deep: #115D5D;
+    -trevor-aqua: #B2D8D8;
+    -trevor-willow: #A6C964;
+    -trevor-olive: #81A939;
+    -trevor-background: #F3F6EF;
+    -trevor-white: #FFFFFF;
+    -trevor-soft: #EAF2E5;
+    -trevor-ink: #18231B;
+    -trevor-muted: #66756B;
+    -trevor-rule: #E3EAE1;
+    -trevor-success: #397A51;
+    -trevor-warning: #C28A36;
+    -trevor-error: #B94D4D;
+    -trevor-focus: #4D795C;
+    -trevor-success-bg: #E3F1E1;
+    -trevor-warning-bg: #FBF0D9;
+    -trevor-error-bg: #F8E7E4;
+    -trevor-info-bg: #E2F0EE;
+
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-base: -trevor-white;
+    -fx-background: -trevor-background;
+    -fx-text-base-color: -trevor-ink;
+    -fx-accent: -trevor-deep;
+    -fx-focus-color: -trevor-focus;
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: -trevor-background;
+}
+
+.label { -fx-text-fill: -trevor-ink; }
+.muted { -fx-font-size: 12px; -fx-font-weight: normal; -fx-text-fill: -trevor-muted; }
+.row-title { -fx-font-size: 13px; -fx-font-weight: bold; }
+.field-label { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #526358; }
+.form-error { -fx-font-size: 12px; -fx-text-fill: -trevor-error; -fx-wrap-text: true; }
+.icon-line {
+    -fx-fill: transparent;
+    -fx-stroke: -trevor-deep;
+    -fx-stroke-width: 1.65;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+.rule { -fx-background-color: -trevor-rule; -fx-min-height: 1px; -fx-max-height: 1px; }
